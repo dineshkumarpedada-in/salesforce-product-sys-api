@@ -1,0 +1,8 @@
+autodiscoveryId: "20239828"
+  
+salesforce:
+  host: "ipaasgw.edicomgroup.com"
+  port: "443"
+  path: "/services/EBIBrokerWSV2"
+
+

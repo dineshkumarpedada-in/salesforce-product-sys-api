@@ -1,0 +1,4 @@
+# Listener TLS Context keystore passwords
+keystore:
+  password: "![GKa/txBwjwn9LtoB9gvuWA==]" # pragma: allowlist-secret
+  keyPassword: "![GKa/txBwjwn9LtoB9gvuWA==]" # pragma: allowlist-secret

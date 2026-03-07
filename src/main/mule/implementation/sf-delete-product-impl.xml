@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:vault="http://www.mulesoft.org/schema/mule/vault" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/vault http://www.mulesoft.org/schema/mule/vault/current/mule-vault.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<sub-flow name="sf-delete-product-subflow" doc:id="e18a48f0-08df-47df-b9fe-63387d3318c4" >
+		<ee:transform doc:name="Set URI Param" doc:id="edc9c745-0123-4582-84fe-eba10699ddcc">
+			<ee:variables>
+				<ee:set-variable variableName="productId"><![CDATA[attributes.uriParams.'productId']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Before QUERY Salesforce Call" doc:id="d7b09038-5414-4548-964b-690b999b90bd" message='#["Before Query Salesforce Call"]' />
+		<set-variable value="#[&quot;SELECT Id FROM Product2 WHERE ExternalId = '&quot; ++ vars.productId ++ &quot;'&quot;]" doc:name="var Query Id" doc:id="1d93cad9-e7a9-4392-aa1c-5b3c60f2a1e5" variableName="query"/>
+		<flow-ref doc:name="sf-product-query-subflow" doc:id="0c95e410-a20b-464b-9b75-62abee3fa0c8" name="sf-product-query-subflow" target="id" targetValue="#[payload.Id[0]]"/>
+		<logger level="INFO" doc:name="After QUERY Salesforce Call" doc:id="af96ab68-c607-41ed-89de-9808a77004c6" message='#[%dw 2.0&#10;output application/json&#10;---&#10;"After QUERY Salesforce Call Preparing to delete product : " ++ vars.productId  ++ " -&gt; " ++ (vars.id default "")]' />
+		<salesforce:delete doc:name="Salesforce Delete" doc:id="95b8c172-9ff8-4cec-81cf-fbb579d915b1" config-ref="Salesforce_Config">
+			<salesforce:ids ><![CDATA[#[[vars.id]]]]></salesforce:ids>
+		</salesforce:delete>
+		<logger level="INFO" doc:name="After DELETE Salesforce Call" doc:id="323bbec6-f4e5-404f-97ae-475fd3dffb37" message='#["After DELETE Salesforce Call"]' />
+		<ee:transform doc:name="Response Payload" doc:id="4864d226-c429-4dfc-a026-17629c3f82b5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json  
+---
+{
+  success: payload.successful,
+  id: if(isEmpty(payload.items.id[0])) payload.items.message [0] else payload.items.id[0]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	
+</mule>

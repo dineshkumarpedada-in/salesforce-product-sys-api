@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:vault="http://www.mulesoft.org/schema/mule/vault" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/vault http://www.mulesoft.org/schema/mule/vault/current/mule-vault.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+
+	<sub-flow name="sf-post-product-subflow" doc:id="f354c387-008b-4881-889a-3a2fe14135c9" >
+		<ee:transform doc:name="Request Payload" doc:id="6855bed4-762f-4b42-8dd5-d38a14ece583" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map (item) -> {
+    ExternalId: item.productId,
+    Name: item.productName,
+    ProductCode: item.productCode,
+    Description: item.description,
+    CurrencyCode__c: item.currencyCode,
+    ProductPrice__c: item.price
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="originalPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Before POST Salesforce Call" doc:id="b23f10e3-58c3-4d99-9d2e-eb9779a848fd" message='#["Before POST Salesforce Call"]'/>
+		<salesforce:create type="Product2" doc:id="260e89ba-6735-41f5-a4e3-539a519353f9" doc:name="Salesforce Create" config-ref="Salesforce_Config"/>
+		<logger level="INFO" doc:name="After POST Salesforce Call" doc:id="33875b1b-1b69-4049-b208-6baf0544bda2" message='#["After POST Salesforce Call"]'/>
+		<ee:transform doc:name="Response Payload" doc:id="68870a74-76c7-4809-b5c4-8b2b6ea710b8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: if ( payload.successful ) "SUCCESS" else "PARTIAL_SUCCESS",
+	totalRequested: sizeOf(payload.items),
+	totalCreated: sizeOf(payload.items filter $.payload.success),
+	(failedRecords: (payload.items filter (!$.payload.success)).payload default []) if(!isEmpty(payload.items filter (!$.payload.success))),
+	(successRecords: payload.items filter $.payload.success map (item, index) -> {
+		Id: item.payload.id,
+		Success: item.payload.success
+	}) if(!isEmpty(payload.items filter ($.payload.success)))
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	
+</mule>

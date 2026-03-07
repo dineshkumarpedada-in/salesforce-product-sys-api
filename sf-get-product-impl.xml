@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<sub-flow name="sf-get-product-subflow" doc:id="e9f5599a-0ad1-4221-9a56-0e3b1aa12a41" >
+		<ee:transform doc:name="Set Query Params" doc:id="d702f96b-1c07-4c9d-9339-9785eef1aff8">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="limit"><![CDATA[%dw 2.0
+output application/json
+---
+(attributes.queryParams.limit default 10) as Number]]></ee:set-variable>
+				<ee:set-variable variableName="offset"><![CDATA[%dw 2.0
+output application/json
+---
+(attributes.queryParams.offset default 0) as Number]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value='#[%dw 2.0&#10;output application/java&#10;---&#10;"Select COUNT() from Product2"]' doc:name="var Query Count" doc:id="12ba5c5c-54a9-4986-b54a-0b2b68b3586e" variableName="query"/>
+		<logger level="INFO" doc:name="Before GET Salesforce Call" doc:id="551b6598-8a3e-4292-a452-9e286779bd01" message='#["Before GET Salesforce Call"]' />
+		<flow-ref doc:name="sf-get-product-query-subflow" doc:id="879ec45b-24f9-4121-89a9-914509c663c0" name="sf-get-product-query-subflow" target="resQuery"/>
+		<logger level="INFO" doc:name="After GET Salesforce Call" doc:id="ea7e403a-091c-4a55-aba1-f1399f72f1eb" message='#["After GET Salesforce Call"]' />
+		<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;sizeOf(vars.resQuery)]" doc:name="Var Count " doc:id="302e10fe-acbd-45b7-812e-757ef77bf674" variableName="count"/>
+		<choice doc:name="Choice ? Page Exists " doc:id="2637a99c-f37d-4b9f-b7f3-088ca9782e19" >
+			<when expression="#[%dw 2.0&#10;output application/json&#10;---&#10;vars.offset &lt; vars.count]" >
+				<set-variable value='#[%dw 2.0&#10;output application/java&#10;---&#10;"SELECT Id, Name, ExternalId, ProductCode, Description, CurrencyCode__c, ProductPrice__c FROM Product2 ORDER BY CreatedDate DESC LIMIT " &#10;++ vars.limit&#10;++ " OFFSET " &#10;++ vars.offset]' doc:name="Get Details Query " doc:id="829782bb-695a-4e38-afbd-f0969007ae02" variableName="query"/>
+				<flow-ref doc:name="sf-get-product-query-subflow" doc:id="17831ed9-c5af-4f9c-9657-772eb3ae9075" name="sf-get-product-query-subflow"/>
+				<ee:transform doc:name="SF Query Response" doc:id="052d1be3-d9eb-44d8-a1b8-c4c29eb2aeba">
+					<ee:message>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="queryResponse" ><![CDATA[%dw 2.0
+output application/json  
+---
+payload map ((item, index) -> {
+  "productId": item.ExternalId default "",
+  "id" : item.Id default "",
+  "productName": item.Name default "",
+  "productCode": item.ProductCode default "",
+  "description": item.Description default "",
+  "currencyCode": item.CurrencyCode__c default "",
+  "price": item.ProductPrice__c default ""
+})]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Case Not Matched log" doc:id="74a76f26-649b-4f09-a686-e33674adb7b0" message="No Records Found"/>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Response Message" doc:id="9c70cfd7-4e02-4904-b061-da4351756836" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[output application/json
+var limit = vars.limit
+var offset = vars.offset
+var total = vars.count
+---
+if (vars.count == 0)
+{
+    Status: "No records found"
+}
+else if (vars.offset >= vars.count)
+{
+  "totalRecords": vars.count,
+  "message": "Page index out of bounds. Offset value must be less than totalRecords count"
+}
+else
+{
+    limit: vars.limit,
+    offset: vars.offset,
+    totalRecords: vars.count,
+    hasNext: (vars.offset + vars.limit) < vars.count,
+    records: vars.queryResponse
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="sf-get-product-query-subflow" doc:id="238e4139-38ca-4def-9003-973b77cca313" >
+		<salesforce:query doc:name="Salesforce Query" doc:id="f3870beb-0af2-48e9-a45d-4a07e9af65f3" config-ref="Salesforce_Config" >
+			<salesforce:salesforce-query ><![CDATA[#[vars.query]]]></salesforce:salesforce-query>
+		</salesforce:query>
+	</sub-flow>
+</mule>

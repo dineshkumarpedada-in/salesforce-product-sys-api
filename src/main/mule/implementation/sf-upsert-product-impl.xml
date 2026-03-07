@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:vault="http://www.mulesoft.org/schema/mule/vault" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/vault http://www.mulesoft.org/schema/mule/vault/current/mule-vault.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<sub-flow name="sf-upsert-product-subflow" doc:id="1f4560b3-2a57-461e-810f-dbf19ade558d" >
+		<ee:transform doc:name="Set URI Param" doc:id="80562f7b-8988-4501-9390-90470e4fa93d" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="productId" ><![CDATA[attributes.uriParams.'productId']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[&quot;SELECT Id FROM Product2 WHERE ExternalId = '&quot; ++ vars.productId ++ &quot;'&quot;]" doc:name="var Query Id" doc:id="5d7282bd-4767-454a-8222-61b6f066026d" variableName="query" />
+		<logger level="INFO" doc:name="Before QUERY Salesforce Call" doc:id="e06e3faf-c8dd-4f8b-ace7-baffba017ddf" message='#["Before Query Salesforce Call"]' />
+		<flow-ref doc:name="sf-product-query-subflow" doc:id="ad855be4-3bf7-4ab1-a6e2-0e3fdfcdd6ee" name="sf-product-query-subflow" target="id" targetValue="#[payload.Id[0]]" />
+		<logger level="INFO" doc:name="After QUERY Salesforce Call" doc:id="e4cba0f0-4c83-400e-92ee-4454ccac853d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;"After QUERY Salesforce Call Preparing To Update Product : " ++ vars.productId  ++ " -&gt; " ++ (vars.id default "")]' />
+		<ee:transform doc:name="Request Payload" doc:id="9de27f32-ab49-4893-b077-bc6ddfab35f2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map (item) -> {
+	Id: vars.id,
+	Name: item.productName,
+	Description: item.description,
+	CurrencyCode__c: item.currencyCode,
+	ProductPrice__c: item.price
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Before UPSERT Salesforce Call" doc:id="33244201-1630-4ee1-b863-4b592cae1e54" message='#["Before UPSERT Salesforce Call"]' />
+		<salesforce:upsert objectType="Product2" externalIdFieldName="Id" doc:name="Salesforce Upsert" doc:id="7d5fe175-778c-42fa-b946-3beb8bb26c59" config-ref="Salesforce_Config" />
+		<logger level="INFO" doc:name="After UPSERT Salesforce Call" doc:id="94cb87b8-6a92-4bf3-8379-ad08f7b98a28" message='#["After UPSERT Salesforce Call"]' />
+		<ee:transform doc:name="Response Payload" doc:id="3c3ce739-2df4-4bce-8ee4-54b47f6429ce" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json  
+---
+{
+  success: payload.successful,
+  id: if(isEmpty(payload.items.id[0])) payload.items.message [0] else payload.items.id[0]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	
+</mule>

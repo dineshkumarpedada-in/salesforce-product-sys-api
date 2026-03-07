@@ -1,0 +1,9 @@
+http:
+  private:
+    port: "8081"
+  retries: "3"
+  retryFrequency: "2000"
+
+retry:
+  attempts: "2"
+  frequency: "1000"
