@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>2527df56-2b74-4a9b-904a-e30d1eb9a4a4</groupId>
 	<artifactId>salesforce-product-sys-api-impl</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<packaging>mule-application</packaging>
 
 	<name>salesforce-product-sys-api</name>
@@ -15,28 +13,23 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-		<app.runtime>4.11.0</app.runtime>
-		<mule.maven.plugin.version>3.7.1</mule.maven.plugin.version>
+		<app.runtime>4.7.4</app.runtime>
+		<mule.maven.plugin.version>4.1.1</mule.maven.plugin.version>
 	</properties>
 
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-clean-plugin</artifactId>
-				<version>3.2.0</version>
-			</plugin>
-			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
-				<version>3.7.1</version>
+				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
 					<cloudhub2Deployment>
 						<uri>https://anypoint.mulesoft.com</uri>
 						<provider>MC</provider>
 						<environment>Sandbox</environment>
-						<target>Cloudhub-US-East-1</target>
+						<target>Cloudhub-US-East-2</target>
 						<muleVersion>4.11.0</muleVersion>
 						<username>dpedada32</username>
 						<password>Welcome@2026</password>
@@ -44,6 +37,7 @@
 						<replicas>1</replicas>
 						<vCores>0.1</vCores>
 					</cloudhub2Deployment>
+					<classifier>mule-application</classifier>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -52,7 +46,7 @@
 		<repository>
 			<id>anypoint-exchange-v3</id>
 			<name>anypoint-exchange-v3</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/${project.groupId}/maven</url>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/2527df56-2b74-4a9b-904a-e30d1eb9a4a4/maven</url>
 			<layout>default</layout>
 		</repository>
 	</distributionManagement>
@@ -76,23 +70,17 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
-			<groupId>d471d316-674f-4056-bd0c-d13e08d499d1</groupId>
-			<artifactId>json-logger</artifactId>
-			<version>3.6.6</version>
+			<groupId>com.mulesoft.connectors</groupId>
+			<artifactId>mule-salesforce-connector</artifactId>
+			<version>11.3.3</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
 			<groupId>2527df56-2b74-4a9b-904a-e30d1eb9a4a4</groupId>
 			<artifactId>salesforce-product-system-api</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.2</version>
 			<classifier>raml</classifier>
 			<type>zip</type>
-		</dependency>
-		<dependency>
-			<groupId>com.mulesoft.connectors</groupId>
-			<artifactId>mule-salesforce-connector</artifactId>
-			<version>11.3.3</version>
-			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
 

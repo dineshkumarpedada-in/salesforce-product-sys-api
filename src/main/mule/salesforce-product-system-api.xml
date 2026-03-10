@@ -2,9 +2,20 @@
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
 	<flow name="salesforce-product-system-api-main">
 		<http:listener doc:name="Listener" doc:id="f5e26d78-0be2-438c-b2fc-ebeed422248f" config-ref="HTTP_Listener_config_new" path="/api/*" />
-		<logger level="INFO" doc:name="log call Entry" doc:id="c45fcbf1-4a31-4d29-950e-4767e3e8c997" message='#["CorrelationId: " ++ correlationId ++ &#10;   " | SAPI Call Entry to " ++ attributes.method ++ ":" ++ attributes.requestUri]'/>
+		<ee:transform doc:name="initVariables" doc:id="e7e821b4-99cf-4b97-b990-ccdff4875f7a">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="apiKickOffTime"><![CDATA[%dw 2.0
+import * from dw::util::Timer
+output application/json
+---
+currentMilliseconds()]]></ee:set-variable>
+				<ee:set-variable resource="dwl/loggingVars.dwl" variableName="loggingVars" />
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="common-process-start-logging-subflow" doc:id="8e62b5e5-f1e4-428e-b635-394d158de9a1" name="common-process-start-logging-subflow" />
 		<apikit:router config-ref="salesforce-product-system-api-config" />
-		<logger level="INFO" doc:name="log call Exit" doc:id="7954b135-1251-4986-b585-f5b0fc3a402e" message='#["SAPI Call Exit - " ++ correlationId]'/>
+		<flow-ref doc:name="common-process-end-logging-subflow" doc:id="cc56fa18-3b22-4be6-8c33-56e606382fd9" name="common-process-end-logging-subflow" />
     </flow>
 	<flow name="get:\api-status:salesforce-product-system-api-config">
         <ee:transform doc:name="set api status response">
@@ -13,9 +24,10 @@
 output application/json
 ---
 {
-  status: "OK",
-  version: "v1",
-  time: now()
+  "apiName": Mule::p('api.Name'),
+  "status": Mule::p('api.status'),
+  "apiVersion": Mule::p('api.Version'),
+  "correlationId": vars.loggingVars.correlationId default correlationId
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>

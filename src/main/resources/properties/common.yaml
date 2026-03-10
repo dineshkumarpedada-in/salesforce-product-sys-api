@@ -7,3 +7,16 @@ http:
 retry:
   attempts: "2"
   frequency: "1000"
+
+api:
+  Name: "salesforce-product-sys-api"
+  Version: "1.0.0"
+  status: "Running"
+
+step:
+  processStart: "Process start"
+  processEnd: "Process End"
+  flowStart: "Flow Start"
+  flowEnd: "Flow End"
+  beforeRequest: "Before Request"
+  afterRequest: "After Request"

@@ -31,28 +31,24 @@ payload map (item) -> {
 output application/json
 ---
 payload]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<logger level="INFO" doc:name="Before POST Salesforce Call" doc:id="b23f10e3-58c3-4d99-9d2e-eb9779a848fd" message='#["Before POST Salesforce Call"]'/>
-		<salesforce:create type="Product2" doc:id="260e89ba-6735-41f5-a4e3-539a519353f9" doc:name="Salesforce Create" config-ref="Salesforce_Config"/>
-		<logger level="INFO" doc:name="After POST Salesforce Call" doc:id="33875b1b-1b69-4049-b208-6baf0544bda2" message='#["After POST Salesforce Call"]'/>
-		<ee:transform doc:name="Response Payload" doc:id="68870a74-76c7-4809-b5c4-8b2b6ea710b8" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+				<ee:set-variable variableName="loggingVars" ><![CDATA[%dw 2.0
 output application/json
 ---
-{
-	status: if ( payload.successful ) "SUCCESS" else "PARTIAL_SUCCESS",
-	totalRequested: sizeOf(payload.items),
-	totalCreated: sizeOf(payload.items filter $.payload.success),
-	(failedRecords: (payload.items filter (!$.payload.success)).payload default []) if(!isEmpty(payload.items filter (!$.payload.success))),
-	(successRecords: payload.items filter $.payload.success map (item, index) -> {
-		Id: item.payload.id,
-		Success: item.payload.success
-	}) if(!isEmpty(payload.items filter ($.payload.success)))
-}]]></ee:set-payload>
+vars.loggingVars update {
+	case .flowName -> "sf-post-product-subflow"
+}
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="common-flow-start-logging-subflow" doc:id="0b73a567-3224-4bf1-852b-6135823e569c" name="common-flow-start-logging-subflow" />
+		<salesforce:create type="Product2" doc:id="260e89ba-6735-41f5-a4e3-539a519353f9" doc:name="Salesforce Create" config-ref="Salesforce_Config"/>
+		<flow-ref doc:name="common-after-request-logging-subflow" doc:id="4955bf86-2d00-4178-871f-3d60a6c2172f" name="common-after-request-logging-subflow" />
+		<ee:transform doc:name="responsePayload" doc:id="68870a74-76c7-4809-b5c4-8b2b6ea710b8" >
+			<ee:message >
+				<ee:set-payload resource="dwl/responsePayload.dwl" />
 			</ee:message>
 		</ee:transform>
+		<flow-ref doc:name="common-flow-end-logging-subflow" doc:id="8a01960f-f83a-4aec-931b-b7b6f5bfc408" name="common-flow-end-logging-subflow" />
 	</sub-flow>
 	
 </mule>

@@ -152,16 +152,17 @@ http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/m
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-if (vars.errorPayload == null)
-({
-    "id": correlationId,
-    "status":  vars.httpStatus,
-    "message": if(error.description != null) error.description else 'UNKNOWN Error',
-    "type": if(error.errorType.namespace != null) error.errorType.namespace  else 'UNKNOWN Type',
-    "detail": if(error.detailedDescription != null) error.detailedDescription  else 'UNKNOWN Error',
-    "timestamp": now() as String { format: "yyyy-MM-dd'T'HH:mm:ss" }
-})
-else vars.errorPayload
+{
+	"id": correlationId,
+	"status": vars.httpStatus,
+	"message": if ( error.description != null ) error.description else 'UNKNOWN Error',
+	"type": if ( error.errorType.namespace != null ) error.errorType.namespace  else 'UNKNOWN Type',
+	"detail": if ( error.detailedDescription != null ) error.detailedDescription  else 'UNKNOWN Error',
+	"timestamp": now() as String {
+		format: "yyyy-MM-dd'T'HH:mm:ss"
+	}
+}
+
 ]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>

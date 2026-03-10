@@ -43,13 +43,13 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 		doc:description="Local encryption key - overwrite by VM args!" />
 	<apikit:config
 		name="salesforce-product-system-api-config"
-		api="resource::2527df56-2b74-4a9b-904a-e30d1eb9a4a4:salesforce-product-system-api:1.0.0:raml:zip:salesforce-product-system-api.raml"
+		api="resource::2527df56-2b74-4a9b-904a-e30d1eb9a4a4:salesforce-product-system-api:1.0.2:raml:zip:salesforce-product-system-api.raml"
 		outboundHeadersMapName="outboundHeaders"
 		httpStatusVarName="httpStatus" />
-	<!-- <api-gateway:autodiscovery apiId="${autodiscoveryId}" ignoreBasePath="true" 
+	 <api-gateway:autodiscovery apiId="${autodiscoveryId}" ignoreBasePath="true" 
 		doc:name="API Autodiscovery" doc:id="b65430d7-6f2b-4d6d-ae52-693560d77528" 
 		flowRef="salesforce-product-system-api-main" doc:description="{autodiscoveryId} 
-		taken form environemnt configuration yamls." /> -->
+		taken form environemnt configuration yamls." /> 
 	<salesforce:sfdc-config name="Salesforce_Config"
 		doc:name="Salesforce Config"
 		doc:id="76e4b8c3-5dee-4121-b2db-33f45feee3ec">
@@ -64,6 +64,6 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 		name="HTTP_Listener_config_new" doc:name="HTTP Listener config"
 		doc:id="0282fd6c-8f1a-4818-8212-a438f219ecbb">
 		<http:listener-connection host="0.0.0.0"
-			port="8089" readTimeout="300000" />
+			port="${http.private.port}" readTimeout="300000" />
 	</http:listener-config>
 </mule>
