@@ -6,6 +6,6 @@ output application/json
 	"appVersion": Mule::p('api.Version'),
 	"timeStamp": now(),
 	"correlationId": attributes.headers.'x-correlation-id' default correlationId,
-	"flowName": "product-pricing-process-api-main",
+	"flowName": "salesforce-product-system-api-main",
 	"requestIdentifier": attributes.method ++ ":" ++ attributes.requestUri
 }
