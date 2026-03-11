@@ -31,8 +31,6 @@
 						<environment>Sandbox</environment>
 						<target>Cloudhub-US-East-2</target>
 						<muleVersion>4.11.0</muleVersion>
-						<username>dpedada32</username>
-						<password>Welcome@2026</password>
 						<applicationName>salesforce-product-sys-api</applicationName>
 						<replicas>1</replicas>
 						<vCores>0.1</vCores>
