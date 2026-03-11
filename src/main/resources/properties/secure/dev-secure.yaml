@@ -1,0 +1,4 @@
+
+salesforce:
+  clientid: "![N2sc9dGvhbDHnnNFi8ibtV7Hwke96ygtupdIJsE2VWGF66er156aJTLd9ecIdAUhxJWgCjoCzWoezYC2x6KfjCg1HcUrr1TylXk5Z/cGx9ifEp6jH0rUWiGGKLASlIu]" # Salesforce: client-id
+  clientsecret: "![fDmMVg3YXLO9rCPD64kMIQWsajQ5zY/S5EL7sBbkPqs05PKHOWE+rwTPgVnNFLwx8fcvwnsOrZ86f7hf3TJcmnNWEo8tnQAYu78Srj7HQn0=]" # Salesforce: client-secret

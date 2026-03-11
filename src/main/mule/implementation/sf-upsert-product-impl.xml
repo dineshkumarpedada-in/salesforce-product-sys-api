@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:vault="http://www.mulesoft.org/schema/mule/vault" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/vault http://www.mulesoft.org/schema/mule/vault/current/mule-vault.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<sub-flow name="sf-upsert-product-subflow" doc:id="1f4560b3-2a57-461e-810f-dbf19ade558d" >
+		<ee:transform doc:name="updateFlowname" doc:id="c33de0d0-f3a7-41b9-839f-e93c57c2a05f">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="loggingVars"><![CDATA[%dw 2.0
+output application/json
+---
+vars.loggingVars update {
+	case .flowName -> "sf-delete-product-subflow"
+}
+]]></ee:set-variable>
+				<ee:set-variable variableName="productId"><![CDATA[attributes.uriParams.'productId']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="common-flow-start-logging-subflow" doc:id="42047620-15b0-44a6-834c-03de13e73270" name="common-flow-start-logging-subflow" />
+		<set-variable value="#[&quot;SELECT Id FROM Product2 WHERE ExternalId = '&quot; ++ vars.productId ++ &quot;'&quot;]" doc:name="queryId" doc:id="5d7282bd-4767-454a-8222-61b6f066026d" variableName="query" />
+		<flow-ref doc:name="common-before-request-logging-subflow" doc:id="dabe8066-cbbc-46f8-9686-498312951d73" name="common-before-request-logging-subflow" />
+		<flow-ref doc:name="sf-product-query-subflow" doc:id="ad855be4-3bf7-4ab1-a6e2-0e3fdfcdd6ee" name="sf-product-query-subflow" target="id" targetValue="#[payload.Id[0]]" />
+		<flow-ref doc:name="common-after-request-logging-subflow" doc:id="76ca542c-070a-4d6d-a9db-c177e5ffa513" name="common-after-request-logging-subflow" />
+		<ee:transform doc:name="Request Payload" doc:id="9de27f32-ab49-4893-b077-bc6ddfab35f2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map (item) -> {
+	Id: vars.id,
+	Name: item.productName,
+	Description: item.description,
+	CurrencyCode__c: item.currencyCode,
+	ProductPrice__c: item.price
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="common-before-request-logging-subflow" doc:id="32fb3587-11ef-43af-9644-0aa093af0bd1" name="common-before-request-logging-subflow" />
+		<salesforce:upsert objectType="Product2" externalIdFieldName="Id" doc:name="Salesforce Upsert" doc:id="7d5fe175-778c-42fa-b946-3beb8bb26c59" config-ref="Salesforce_Config" />
+		<flow-ref doc:name="common-after-request-logging-subflow" doc:id="bafaeab4-b38d-4427-a069-70f8eee992ae" name="common-after-request-logging-subflow" />
+		<ee:transform doc:name="Response Payload" doc:id="3c3ce739-2df4-4bce-8ee4-54b47f6429ce" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json  
+---
+{
+  success: payload.successful,
+  id: if(isEmpty(payload.items.id[0])) payload.items.message [0] else payload.items.id[0]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="common-flow-end-logging-subflow" doc:id="590715ae-6423-4089-833c-cb0183078ee7" name="common-flow-end-logging-subflow" />
+	</sub-flow>
+	
+</mule>
